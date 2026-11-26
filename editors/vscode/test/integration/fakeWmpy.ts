@@ -53,7 +53,7 @@ function lsp(): void {
           case "wmpy.preview":
             return serve((url) => send({ id: m.id, result: { url } }));
           case "wmpy.check":
-            return send({ id: m.id, result: { ok: true, errors: 0, warnings: 0, problems: [] } });
+            return send({ id: m.id, result: { errors: 0, warnings: 0, infos: 0, files: 1 } });
           case "wmpy.pack":
             return send({ id: m.id, result: { path: "/tmp/x.wmplugin", sha256: "0".repeat(64), size: 2048 } });
           case "wmpy.run":

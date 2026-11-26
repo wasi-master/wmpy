@@ -3,6 +3,7 @@
 // pointing python.analysis.stubPath at them gives Pylance the package. This
 // only ever happens when the user says yes.
 
+import * as fs from "node:fs";
 import * as path from "node:path";
 import * as vscode from "vscode";
 import { run } from "./cli";
@@ -65,7 +66,11 @@ export async function offerStubs(
   if (!pylanceInstalled() || context.workspaceState.get<boolean>(DONT_ASK)) return;
   const root = roots.find((r) => {
     const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(r));
-    return folder && vscode.workspace.getConfiguration("python.analysis", folder.uri).get<string>("stubPath") !== stubPathFor(r, folder);
+    if (!folder) return false;
+    // `wmpy new` writes a pyrightconfig.json with the stubPath, which Pylance
+    // reads when the plugin folder is the workspace folder itself.
+    if (path.resolve(folder.uri.fsPath) === path.resolve(r) && fs.existsSync(path.join(r, "pyrightconfig.json"))) return false;
+    return vscode.workspace.getConfiguration("python.analysis", folder.uri).get<string>("stubPath") !== stubPathFor(r, folder);
   });
   if (!root) return;
   const yes = "Write Stubs";

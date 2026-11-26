@@ -32,6 +32,8 @@ async function main(): Promise<void> {
     extensionTestsPath: path.join(__dirname, "suite.js"),
     launchArgs: [workspace, "--disable-extensions", "--disable-workspace-trust", "--skip-welcome", "--skip-release-notes"],
     extensionTestsEnv: { WMPY_FAKE_LOG: log },
+    // An idle timeout for the VS Code download; slow links need more than the default 15 s.
+    timeout: 120000,
   });
 }
 

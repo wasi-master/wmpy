@@ -126,21 +126,28 @@ export function register(p: Parts): void {
   add("wmpy.checkPlugin", async (uri?: vscode.Uri) => {
     const root = await p.plugins.pick(uri);
     if (!root) return;
-    let report = (await p.server.command("wmpy.check", root).catch(() => undefined)) as CheckReport | undefined;
-    const viaServer = !!report && Array.isArray(report.problems);
-    if (!viaServer) {
+    // The server republishes the folder's problems itself and answers with counts.
+    const answer = (await p.server.command("wmpy.check", root).catch(() => undefined)) as { errors?: number; warnings?: number } | undefined;
+    let errors: number;
+    let warnings: number;
+    if (answer && typeof answer.errors === "number") {
+      errors = answer.errors;
+      warnings = answer.warnings ?? 0;
+    } else {
       const program = await exe();
       if (!program) return;
       const ran = await run(program, ["check", root, "--json"], { cwd: root });
-      report = parseJsonOutput<CheckReport>(ran.stdout);
+      const report = parseJsonOutput<CheckReport>(ran.stdout);
       if (!report || !Array.isArray(report.problems)) {
         vscode.window.showErrorMessage(`wmpy check failed: ${(ran.stderr || ran.stdout).trim()}`);
         return;
       }
       showCheck(checkDiagnostics, root, report);
+      errors = report.errors;
+      warnings = report.warnings;
     }
-    const text = `${p.plugins.label(root)}: ${report!.errors} errors, ${report!.warnings} warnings`;
-    if (report!.ok && report!.warnings === 0) {
+    const text = `${p.plugins.label(root)}: ${errors} errors, ${warnings} warnings`;
+    if (errors === 0 && warnings === 0) {
       vscode.window.setStatusBarMessage(`$(pass) ${text}`, 5000);
       return;
     }
