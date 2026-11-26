@@ -1,0 +1,76 @@
+<idea-plugin>
+    <id>com.wasimaster.wmpy</id>
+    <name>wmpy</name>
+    <vendor url="https://github.com/wasi-master/wmpy">Wasi Master</vendor>
+    <description><![CDATA[
+<p>Write Python plugins for <a href="https://wmkeyboard.pages.dev">WM Keyboard</a>.</p>
+<ul>
+  <li>Checks, completions, hover help and quick fixes from the <code>wmpy</code> language server, for the Python files of every folder with a <code>plugin.json</code>.</li>
+  <li><b>wmpy Preview</b>: the plugin's panel in a tool window, redrawn as you save, and the ▶ Preview code lens above <code>def render</code>.</li>
+  <li>Run configurations for <code>wmpy run</code> and <code>wmpy test</code>, and a Run tests code lens.</li>
+  <li>File | New | wmpy Plugin, from a template.</li>
+  <li>The <code>plugin.json</code> schema: completion, documentation and errors for every field.</li>
+</ul>
+<p>Needs the <code>wmpy</code> program: <a href="https://wmkeyboard.pages.dev/plugins/wmpy/">how to install it</a>.
+The language server runs through LSP4IJ, which the IDE installs with this plugin.</p>
+]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.redhat.devtools.lsp4ij</depends>
+    <depends optional="true" config-file="wmpy-python.xml">com.intellij.modules.python</depends>
+    <depends optional="true" config-file="wmpy-json.xml">com.intellij.modules.json</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.wasimaster.wmpy.WmpySettings"/>
+        <applicationConfigurable parentId="tools" instance="com.wasimaster.wmpy.WmpyConfigurable"
+                                 id="com.wasimaster.wmpy.settings" displayName="wmpy"/>
+        <notificationGroup id="wmpy" displayType="BALLOON"/>
+        <toolWindow id="wmpy Preview" anchor="right" secondary="false" canCloseContents="true"
+                    icon="/icons/wmpy.svg" factoryClass="com.wasimaster.wmpy.preview.PreviewToolWindowFactory"/>
+        <configurationType implementation="com.wasimaster.wmpy.run.WmpyConfigurationType"/>
+        <postStartupActivity implementation="com.wasimaster.wmpy.WmpyStartup"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+        <server id="wmpy" name="wmpy" factoryClass="com.wasimaster.wmpy.lsp.WmpyServerFactory">
+            <description><![CDATA[The wmpy language server for WM Keyboard plugins: <code>wmpy lsp</code>.]]></description>
+        </server>
+    </extensions>
+
+    <actions>
+        <!-- Code lens commands from the server, handled here instead of sent back to it. -->
+        <action id="wmpy.preview" class="com.wasimaster.wmpy.lsp.PreviewLensAction" text="Preview"/>
+        <action id="wmpy.test" class="com.wasimaster.wmpy.lsp.TestLensAction" text="Run Tests"/>
+        <action id="wmpy.run" class="com.wasimaster.wmpy.lsp.RunLensAction" text="Run in Terminal"/>
+
+        <group id="com.wasimaster.wmpy.Menu" text="wmpy" popup="true" icon="/icons/wmpy.svg">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <action id="com.wasimaster.wmpy.Preview" class="com.wasimaster.wmpy.actions.PreviewAction"
+                    text="Preview" description="Show the plugin's panel in the wmpy Preview tool window"/>
+            <action id="com.wasimaster.wmpy.Run" class="com.wasimaster.wmpy.actions.RunAction"
+                    text="Run in Terminal" description="Run the plugin with wmpy run"/>
+            <action id="com.wasimaster.wmpy.Test" class="com.wasimaster.wmpy.actions.TestAction"
+                    text="Run Tests" description="Run the plugin's tests with wmpy test"/>
+            <action id="com.wasimaster.wmpy.Check" class="com.wasimaster.wmpy.actions.CheckAction"
+                    text="Check" description="Check the plugin's code and plugin.json"/>
+            <action id="com.wasimaster.wmpy.Pack" class="com.wasimaster.wmpy.actions.PackAction"
+                    text="Pack .wmplugin" description="Build the plugin's .wmplugin file"/>
+            <separator/>
+            <action id="com.wasimaster.wmpy.PipInstall" class="com.wasimaster.wmpy.actions.PipInstallAction"
+                    text="pip install…" description="Add a pure-Python package from PyPI to the plugin"/>
+            <action id="com.wasimaster.wmpy.PipRemove" class="com.wasimaster.wmpy.actions.PipRemoveAction"
+                    text="pip remove…" description="Take a package out of the plugin"/>
+            <action id="com.wasimaster.wmpy.Stubs" class="com.wasimaster.wmpy.actions.StubsAction"
+                    text="Write Type Stubs" description="Write .wmpy/stubs for the wm package"/>
+            <action id="com.wasimaster.wmpy.Publish" class="com.wasimaster.wmpy.actions.PublishAction"
+                    text="Publish" description="Send the plugin to the community repository"/>
+        </group>
+
+        <action id="com.wasimaster.wmpy.NewPlugin" class="com.wasimaster.wmpy.actions.NewPluginAction"
+                text="wmpy Plugin" description="Make a WM Keyboard plugin folder from a template" icon="/icons/wmpy.svg">
+            <add-to-group group-id="NewGroup" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

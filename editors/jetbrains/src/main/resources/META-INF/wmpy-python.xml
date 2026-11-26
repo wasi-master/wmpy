@@ -1,0 +1,6 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+        <languageMapping language="Python" serverId="wmpy" languageId="python"
+                         documentMatcher="com.wasimaster.wmpy.lsp.InPluginFolder"/>
+    </extensions>
+</idea-plugin>

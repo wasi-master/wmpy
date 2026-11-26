@@ -1,0 +1,9 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="JavaScript.JsonSchema">
+        <ProviderFactory implementation="com.wasimaster.wmpy.schema.WmpySchemaProviderFactory"/>
+    </extensions>
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+        <languageMapping language="JSON" serverId="wmpy" languageId="json"
+                         documentMatcher="com.wasimaster.wmpy.lsp.IsPluginManifest"/>
+    </extensions>
+</idea-plugin>
