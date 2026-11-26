@@ -1,0 +1,8 @@
+**
+!dist/extension.js
+!schemas/plugin.schema.json
+!media/icon.png
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE

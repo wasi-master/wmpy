@@ -1,0 +1,269 @@
+{
+  "name": "wmpy",
+  "displayName": "wmpy: WM Keyboard plugins",
+  "description": "Write, preview, test and pack Python plugins for WM Keyboard, with the wmpy language server.",
+  "version": "0.1.0",
+  "publisher": "wasimaster",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "homepage": "https://wmkeyboard.pages.dev/plugins/editors/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wasi-master/wmpy",
+    "directory": "editors/vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/wasi-master/wmpy/issues"
+  },
+  "engines": {
+    "vscode": "^1.91.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Testing"
+  ],
+  "keywords": [
+    "wm keyboard",
+    "wmkeyboard",
+    "plugin",
+    "python",
+    "android keyboard"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "workspaceContains:**/plugin.json",
+    "onLanguage:python"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "The language server, previews, tests and every wmpy command run code from the workspace, so they wait until you trust it. The plugin.json schema works either way.",
+      "restrictedConfigurations": [
+        "wmpy.path"
+      ]
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "wmpy.newPlugin",
+        "title": "New Plugin…",
+        "category": "wmpy",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "wmpy.openPreview",
+        "title": "Preview",
+        "category": "wmpy",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "wmpy.runInTerminal",
+        "title": "Run in Terminal",
+        "category": "wmpy",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "wmpy.runTests",
+        "title": "Run Tests",
+        "category": "wmpy",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "wmpy.checkPlugin",
+        "title": "Check",
+        "category": "wmpy",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "wmpy.packPlugin",
+        "title": "Pack .wmplugin",
+        "category": "wmpy",
+        "icon": "$(package)"
+      },
+      {
+        "command": "wmpy.pipInstall",
+        "title": "pip install…",
+        "category": "wmpy"
+      },
+      {
+        "command": "wmpy.pipRemove",
+        "title": "pip remove…",
+        "category": "wmpy"
+      },
+      {
+        "command": "wmpy.publishPlugin",
+        "title": "Publish",
+        "category": "wmpy",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "wmpy.writeStubs",
+        "title": "Write Type Stubs",
+        "category": "wmpy"
+      },
+      {
+        "command": "wmpy.restartServer",
+        "title": "Restart Language Server",
+        "category": "wmpy"
+      },
+      {
+        "command": "wmpy.showOutput",
+        "title": "Show Output",
+        "category": "wmpy"
+      },
+      {
+        "command": "wmpy.downloadBinary",
+        "title": "Download wmpy",
+        "category": "wmpy"
+      },
+      {
+        "command": "wmpy.showMenu",
+        "title": "Show Commands",
+        "category": "wmpy"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "wmpy.showMenu",
+          "when": "false"
+        },
+        {
+          "command": "wmpy.openPreview",
+          "when": "wmpy.hasPlugins"
+        },
+        {
+          "command": "wmpy.runInTerminal",
+          "when": "wmpy.hasPlugins"
+        },
+        {
+          "command": "wmpy.runTests",
+          "when": "wmpy.hasPlugins"
+        },
+        {
+          "command": "wmpy.checkPlugin",
+          "when": "wmpy.hasPlugins"
+        },
+        {
+          "command": "wmpy.packPlugin",
+          "when": "wmpy.hasPlugins"
+        },
+        {
+          "command": "wmpy.pipInstall",
+          "when": "wmpy.hasPlugins"
+        },
+        {
+          "command": "wmpy.pipRemove",
+          "when": "wmpy.hasPlugins"
+        },
+        {
+          "command": "wmpy.publishPlugin",
+          "when": "wmpy.hasPlugins"
+        },
+        {
+          "command": "wmpy.writeStubs",
+          "when": "wmpy.hasPlugins"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "wmpy.openPreview",
+          "when": "wmpy.inPlugin && !activeWebviewPanelId",
+          "group": "navigation@1"
+        },
+        {
+          "command": "wmpy.runInTerminal",
+          "when": "wmpy.inPlugin && !activeWebviewPanelId",
+          "group": "navigation@2"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "wmpy.newPlugin",
+          "when": "explorerResourceIsFolder",
+          "group": "wmpy@1"
+        },
+        {
+          "command": "wmpy.openPreview",
+          "when": "resourceFilename == plugin.json",
+          "group": "wmpy@2"
+        },
+        {
+          "command": "wmpy.packPlugin",
+          "when": "resourceFilename == plugin.json",
+          "group": "wmpy@3"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "wmpy",
+      "properties": {
+        "wmpy.path": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "markdownDescription": "The `wmpy` program. Empty looks on `PATH`, then in the copy this extension downloaded."
+        },
+        "wmpy.preview.theme": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "light",
+            "dark"
+          ],
+          "default": "auto",
+          "markdownDescription": "The keyboard theme the preview draws with. `auto` follows the colour theme."
+        },
+        "wmpy.offerStubs": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Offer to write `.wmpy/stubs` and point Pylance's `python.analysis.stubPath` at them, so Pylance knows the `wm` package."
+        },
+        "wmpy.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Log the messages between the editor and the wmpy language server."
+        }
+      }
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "plugin.json",
+          "!**/node_modules/**",
+          "!**/.claude-plugin/plugin.json"
+        ],
+        "url": "./schemas/plugin.schema.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build -- --production",
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "node esbuild.mjs --tests && node --test \"out/test/unit/*.test.js\"",
+    "test:integration": "node esbuild.mjs --tests && node out/test/integration/run.js",
+    "package": "vsce package --no-dependencies -o wmpy.vsix"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "@types/vscode": "~1.91.0",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^4.1.1",
+    "esbuild": "^0.28.2",
+    "ovsx": "^1.4.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^11.0.1"
+  }
+}

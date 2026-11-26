@@ -1,0 +1,20 @@
+id = "wmpy"
+name = "wmpy"
+description = "WM Keyboard Python plugins: checks, completions, ▶ Preview and tests from the wmpy language server, and the plugin.json schema."
+version = "0.1.0"
+schema_version = 1
+authors = ["Wasi Master"]
+repository = "https://github.com/wasi-master/wmpy"
+
+[language_servers.wmpy]
+name = "wmpy"
+languages = ["Python", "JSON"]
+
+[language_servers.wmpy.language_ids]
+Python = "python"
+JSON = "json"
+
+[[capabilities]]
+kind = "download_file"
+host = "github.com"
+path = ["wasi-master", "wmpy", "**"]
