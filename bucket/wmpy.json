@@ -1,0 +1,33 @@
+{
+  "version": "0.1.0",
+  "description": "Make, check, test, preview and pack WM Keyboard's Python plugins",
+  "homepage": "https://wmkeyboard.pages.dev/plugins/wmpy/",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/wasi-master/wmpy/releases/download/v0.1.0/wmpy-x86_64-pc-windows-msvc.zip",
+      "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "arm64": {
+      "url": "https://github.com/wasi-master/wmpy/releases/download/v0.1.0/wmpy-aarch64-pc-windows-msvc.zip",
+      "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "bin": "wmpy.exe",
+  "checkver": {
+    "github": "https://github.com/wasi-master/wmpy"
+  },
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/wasi-master/wmpy/releases/download/v$version/wmpy-x86_64-pc-windows-msvc.zip"
+      },
+      "arm64": {
+        "url": "https://github.com/wasi-master/wmpy/releases/download/v$version/wmpy-aarch64-pc-windows-msvc.zip"
+      }
+    },
+    "hash": {
+      "url": "$url.sha256"
+    }
+  }
+}

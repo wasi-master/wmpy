@@ -1,0 +1,8 @@
+[
+  {"package": "@wmpy/darwin-arm64", "os": "darwin", "cpu": "arm64", "triple": "aarch64-apple-darwin", "archive": "tar.gz", "exe": "wmpy"},
+  {"package": "@wmpy/darwin-x64", "os": "darwin", "cpu": "x64", "triple": "x86_64-apple-darwin", "archive": "tar.gz", "exe": "wmpy"},
+  {"package": "@wmpy/linux-arm64", "os": "linux", "cpu": "arm64", "triple": "aarch64-unknown-linux-musl", "archive": "tar.gz", "exe": "wmpy"},
+  {"package": "@wmpy/linux-x64", "os": "linux", "cpu": "x64", "triple": "x86_64-unknown-linux-musl", "archive": "tar.gz", "exe": "wmpy"},
+  {"package": "@wmpy/win32-arm64", "os": "win32", "cpu": "arm64", "triple": "aarch64-pc-windows-msvc", "archive": "zip", "exe": "wmpy.exe"},
+  {"package": "@wmpy/win32-x64", "os": "win32", "cpu": "x64", "triple": "x86_64-pc-windows-msvc", "archive": "zip", "exe": "wmpy.exe"}
+]

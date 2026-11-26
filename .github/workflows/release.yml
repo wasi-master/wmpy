@@ -1,0 +1,363 @@
+# On a v* tag: builds wmpy from WMKeyboard at the commit in WMKEYBOARD_REF for
+# six platforms, builds the editor extensions, makes the GitHub release, bumps
+# the Homebrew formula and the Scoop manifest, and publishes to npm, PyPI, the
+# VS Code Marketplace, Open VSX and the JetBrains Marketplace.
+#
+# Secrets: NPM_TOKEN, VSCE_PAT, OVSX_PAT, JETBRAINS_TOKEN. PyPI uses trusted
+# publishing (environment "pypi"), so it needs no secret. See README.md.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Versions and source
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      ref: ${{ steps.v.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: v
+        name: Read the version and the WMKeyboard commit
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          ref="$(tr -d '[:space:]' < WMKEYBOARD_REF)"
+          echo "$ref" | grep -Eq '^[0-9a-f]{40}$' || { echo "::error::WMKEYBOARD_REF is not a full commit sha"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+      - name: Every package carries the tag's version
+        run: python3 scripts/set_version.py --check "${{ steps.v.outputs.version }}"
+
+  build:
+    name: wmpy ${{ matrix.target }}
+    needs: check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-musl, os: ubuntu-24.04, archive: tar.gz, runs: true }
+          - { target: aarch64-unknown-linux-musl, os: ubuntu-24.04-arm, archive: tar.gz, runs: true }
+          - { target: aarch64-apple-darwin, os: macos-15, archive: tar.gz, runs: true }
+          - { target: x86_64-apple-darwin, os: macos-15, archive: tar.gz, runs: false }
+          - { target: x86_64-pc-windows-msvc, os: windows-2025, archive: zip, runs: true }
+          - { target: aarch64-pc-windows-msvc, os: windows-2025, archive: zip, runs: false }
+    defaults:
+      run:
+        shell: bash
+    env:
+      VERSION: ${{ needs.check.outputs.version }}
+      TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: wmpy
+      # Only what native/wmpy builds from: its crate, the crates it depends on
+      # by path, and the files they include_str!/include_bytes!.
+      - uses: actions/checkout@v7
+        with:
+          repository: wasi-master/wmkeyboard
+          ref: ${{ needs.check.outputs.ref }}
+          path: wmkeyboard
+          sparse-checkout: |
+            native/wmpy
+            native/wm-python
+            native/wm-python-tooling
+            native/wm-python-pip
+            app/src/main/assets/plugin-templates
+            docs/src/content/docs/plugins
+      - name: Rust
+        run: |
+          rustup toolchain install stable --profile minimal --target "$TARGET"
+          rustup default stable
+      - name: musl
+        if: contains(matrix.target, 'musl')
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+      - name: Build
+        working-directory: wmkeyboard/native/wmpy
+        env:
+          CC_x86_64_unknown_linux_musl: musl-gcc
+          CC_aarch64_unknown_linux_musl: musl-gcc
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.target == 'x86_64-apple-darwin' && '10.12' || '11.0' }}
+          RUSTFLAGS: ${{ contains(matrix.target, 'windows') && '-C target-feature=+crt-static' || '' }}
+        run: |
+          # The release's version, not the crate's own: wmpy --version reports it.
+          perl -0pi -e 's/^version = "[^"]*"/version = "$ENV{VERSION}"/m' Cargo.toml
+          grep -m1 '^version' Cargo.toml
+          cargo build --release --target "$TARGET"
+      - name: Runs and reports the version
+        if: matrix.runs
+        run: |
+          exe="wmkeyboard/native/wmpy/target/$TARGET/release/wmpy"
+          [ -f "$exe.exe" ] && exe="$exe.exe"
+          "$exe" --version
+          "$exe" --version | grep -q "^wmpy $VERSION "
+          "$exe" completions bash > /dev/null
+      - name: Static on Linux
+        if: contains(matrix.target, 'musl')
+        run: |
+          file "wmkeyboard/native/wmpy/target/$TARGET/release/wmpy"
+          ! ldd "wmkeyboard/native/wmpy/target/$TARGET/release/wmpy" 2>/dev/null | grep -q '=>'
+      - name: Package
+        run: |
+          mkdir -p pkg dist
+          cp wmpy/LICENSE wmpy/README.md pkg/
+          name="wmpy-$TARGET.${{ matrix.archive }}"
+          if [ "${{ matrix.archive }}" = zip ]; then
+            cp "wmkeyboard/native/wmpy/target/$TARGET/release/wmpy.exe" pkg/
+            (cd pkg && 7z a -tzip "../dist/$name" wmpy.exe LICENSE README.md > /dev/null)
+          else
+            cp "wmkeyboard/native/wmpy/target/$TARGET/release/wmpy" pkg/
+            chmod 755 pkg/wmpy
+            tar -czf "dist/$name" -C pkg wmpy LICENSE README.md
+          fi
+          if command -v sha256sum > /dev/null; then sum="$(sha256sum "dist/$name" | cut -d ' ' -f 1)"
+          else sum="$(shasum -a 256 "dist/$name" | cut -d ' ' -f 1)"; fi
+          echo "$sum  $name" | tee "dist/$name.sha256"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wmpy-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  vscode:
+    name: VS Code extension
+    needs: check
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: editors/vscode
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run package
+      - run: mkdir -p ../../dist && cp wmpy.vsix ../../dist/wmpy.vsix && python3 ../../scripts/sha256.py ../../dist/wmpy.vsix
+      - uses: actions/upload-artifact@v7
+        with:
+          name: editor-vscode
+          path: dist/*
+          if-no-files-found: error
+
+  jetbrains:
+    name: JetBrains plugin
+    needs: check
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: editors/jetbrains
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: 9.9.2
+      # The wrapper jar is not committed; the wrapper is made here.
+      - run: gradle wrapper --gradle-version 9.9.2
+      - run: ./gradlew buildPlugin
+      - run: |
+          mkdir -p ../../dist
+          cp build/distributions/*.zip ../../dist/wmpy-jetbrains.zip
+          python3 ../../scripts/sha256.py ../../dist/wmpy-jetbrains.zip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: editor-jetbrains
+          path: dist/*
+          if-no-files-found: error
+
+  zed:
+    name: Zed extension
+    needs: check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - run: |
+          rustup toolchain install stable --profile minimal --target wasm32-wasip2
+          rustup default stable
+      - working-directory: editors/zed
+        run: |
+          cargo test
+          cargo build --release --target wasm32-wasip2
+      - run: |
+          mkdir -p dist
+          python3 scripts/package_zed.py editors/zed/target/wasm32-wasip2/release/zed_wmpy.wasm dist/wmpy-zed.zip
+          python3 scripts/sha256.py dist/wmpy-zed.zip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: editor-zed
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: GitHub release
+    needs: [check, build, vscode, jetbrains, zed]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: SHA256SUMS
+        working-directory: dist
+        run: |
+          cat ./*.sha256 | sort -k 2 > SHA256SUMS
+          cat SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.check.outputs.version }}
+          REF: ${{ needs.check.outputs.ref }}
+        run: |
+          notes="wmpy $VERSION, built from wasi-master/wmkeyboard@$REF.
+
+          Install: https://wmkeyboard.pages.dev/plugins/wmpy/
+          Editors: https://wmkeyboard.pages.dev/plugins/editors/"
+          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "wmpy $VERSION" --notes "$notes" --verify-tag
+
+  manifests:
+    name: Homebrew and Scoop
+    needs: [check, release]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Bump Formula/wmpy.rb and bucket/wmpy.json
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          cat dist/*.sha256 > /tmp/SHA256SUMS
+          python3 scripts/bump_manifests.py "$VERSION" /tmp/SHA256SUMS
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/wmpy.rb bucket/wmpy.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Formula and bucket: wmpy $VERSION"
+          git push origin HEAD:main
+
+  npm:
+    name: npm
+    needs: [check, release]
+    runs-on: ubuntu-24.04
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          pattern: wmpy-*
+          merge-multiple: true
+      - run: node packaging/npm/build.mjs "${{ needs.check.outputs.version }}" dist npm-out
+      # The platform packages first, so the launcher never points at a missing version.
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for dir in npm-out/*-*; do
+            (cd "$dir" && npm publish --access public --provenance)
+          done
+          (cd npm-out/wmpy && npm publish --access public --provenance)
+
+  pypi:
+    name: PyPI
+    needs: [check, release]
+    runs-on: ubuntu-24.04
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          pattern: wmpy-*
+          merge-multiple: true
+      - run: python3 packaging/pypi/build_wheels.py "${{ needs.check.outputs.version }}" dist wheels
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: wheels
+
+  vscode-publish:
+    name: VS Code Marketplace and Open VSX
+    needs: [check, release]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v8
+        with:
+          name: editor-vscode
+          path: dist
+      - name: VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx --yes @vscode/vsce@4.1.1 publish --packagePath dist/wmpy.vsix
+      - name: Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx --yes ovsx@1.4.0 publish dist/wmpy.vsix
+
+  jetbrains-publish:
+    name: JetBrains Marketplace
+    needs: [check, release]
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: editors/jetbrains
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: 9.9.2
+      - run: gradle wrapper --gradle-version 9.9.2
+      - name: Publish
+        env:
+          JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
+        run: ./gradlew publishPlugin

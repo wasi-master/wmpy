@@ -1,0 +1,161 @@
+# Builds and tests the editor extensions, the packaging and the install
+# scripts, and lints the workflows. Publishes nothing.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflows:
+    name: Lint the workflows
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color
+
+  schema:
+    name: plugin.json schema
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install jsonschema
+      - run: python editors/schemas/test_schema.py
+
+  vscode:
+    name: VS Code extension
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: editors/vscode
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run package
+      # Starts VS Code with the extension and a stand-in wmpy (test/integration).
+      - run: xvfb-run -a npm run test:integration
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wmpy-vsix
+          path: editors/vscode/wmpy.vsix
+
+  zed:
+    name: Zed extension
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: editors/zed
+    steps:
+      - uses: actions/checkout@v7
+      - run: |
+          rustup toolchain install stable --profile minimal --target wasm32-wasip2 --component clippy
+          rustup default stable
+      - run: cargo test
+      - run: cargo clippy --release --target wasm32-wasip2 -- -D warnings
+      - run: cargo build --release --target wasm32-wasip2
+
+  jetbrains:
+    name: JetBrains plugin
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: editors/jetbrains
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: 9.9.2
+      - run: gradle wrapper --gradle-version 9.9.2
+      - run: ./gradlew test buildPlugin
+      - run: ./gradlew verifyPlugin
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wmpy-jetbrains
+          path: editors/jetbrains/build/distributions/*.zip
+
+  packaging:
+    name: Packaging on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Versions agree
+        run: python scripts/set_version.py --check "$(node -p 'require("./editors/vscode/package.json").version')"
+      - name: shellcheck
+        if: runner.os == 'Linux'
+        run: shellcheck install.sh scripts/test-install.sh
+      - name: install.sh
+        run: sh scripts/test-install.sh
+      - name: A fake release
+        run: python scripts/fake_release.py "$RUNNER_TEMP/rel" 9.9.9
+      - name: PyPI wheels install and run
+        run: |
+          python packaging/pypi/build_wheels.py 9.9.9 "$RUNNER_TEMP/rel" "$RUNNER_TEMP/wheels"
+          python -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --no-index --find-links "$RUNNER_TEMP/wheels" wmpy==9.9.9
+          "$RUNNER_TEMP/venv/bin/wmpy" --version | grep -q "wmpy 9.9.9"
+          "$RUNNER_TEMP/venv/bin/python" -m wmpy --version | grep -q "wmpy 9.9.9"
+      - name: npm packages install and run
+        run: |
+          node packaging/npm/build.mjs 9.9.9 "$RUNNER_TEMP/rel" "$RUNNER_TEMP/npm"
+          plat="$(node -p 'process.platform + "-" + process.arch')"
+          mkdir -p "$RUNNER_TEMP/npmtest/tgz" && cd "$RUNNER_TEMP/npmtest"
+          (cd tgz && npm pack "$RUNNER_TEMP/npm/wmpy" "$RUNNER_TEMP/npm/$plat")
+          echo '{"name": "t", "version": "1.0.0", "private": true}' > package.json
+          npm install --offline --no-audit --no-fund ./tgz/wmpy-9.9.9.tgz "./tgz/wmpy-$plat-9.9.9.tgz"
+          npx --offline wmpy --version | grep -q "wmpy 9.9.9"
+      - name: Formula and bucket bump
+        run: |
+          python scripts/bump_manifests.py 9.9.9 "$RUNNER_TEMP/rel/SHA256SUMS"
+          grep -q 'version "9.9.9"' Formula/wmpy.rb
+          if grep -q '"0000000000000000000000000000000000000000000000000000000000000000"' Formula/wmpy.rb; then exit 1; fi
+          python -c "import json; d = json.load(open('bucket/wmpy.json')); assert d['version'] == '9.9.9', d"
+          ruby -c Formula/wmpy.rb
+          git checkout -- Formula bucket
+
+  install-windows:
+    name: install.ps1
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - shell: pwsh
+        run: ./scripts/test-install.ps1

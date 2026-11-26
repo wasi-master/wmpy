@@ -1,0 +1,38 @@
+{
+  "name": "wmpy",
+  "version": "0.1.0",
+  "description": "wmpy: make, check, test, preview and pack WM Keyboard's Python plugins",
+  "license": "MIT",
+  "homepage": "https://wmkeyboard.pages.dev/plugins/wmpy/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wasi-master/wmpy.git",
+    "directory": "packaging/npm/wmpy"
+  },
+  "keywords": [
+    "wm keyboard",
+    "wmkeyboard",
+    "plugin",
+    "python",
+    "language server"
+  ],
+  "bin": {
+    "wmpy": "bin/wmpy.js"
+  },
+  "files": [
+    "bin/wmpy.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "optionalDependencies": {
+    "@wmpy/darwin-arm64": "0.1.0",
+    "@wmpy/darwin-x64": "0.1.0",
+    "@wmpy/linux-arm64": "0.1.0",
+    "@wmpy/linux-x64": "0.1.0",
+    "@wmpy/win32-arm64": "0.1.0",
+    "@wmpy/win32-x64": "0.1.0"
+  }
+}
