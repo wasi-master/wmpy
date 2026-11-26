@@ -1,0 +1,10 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.kaomoji",
+  "name": "Kaomoji board",
+  "pluginVersion": "1.0.0",
+  "apiVersion": 5,
+  "permissions": [
+    "field.write"
+  ]
+}

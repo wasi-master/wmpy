@@ -1,0 +1,29 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.dictionary",
+  "name": "Dictionary",
+  "pluginVersion": "1.0.0",
+  "description": "Look up what an English word means.",
+  "apiVersion": 5,
+  "permissions": [
+    "network",
+    "storage"
+  ],
+  "hosts": [
+    "api.dictionaryapi.dev"
+  ],
+  "tool": {
+    "icon": "dictionary",
+    "tile": true,
+    "keyword": "define",
+    "chip": true
+  },
+  "settings": [
+    {
+      "key": "examples",
+      "type": "switch",
+      "label": "Show examples",
+      "default": "true"
+    }
+  ]
+}

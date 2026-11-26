@@ -1,0 +1,13 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.exchange",
+  "name": "Exchange rates",
+  "pluginVersion": "1.0.0",
+  "apiVersion": 5,
+  "permissions": [
+    "network"
+  ],
+  "hosts": [
+    "api.frankfurter.dev"
+  ]
+}

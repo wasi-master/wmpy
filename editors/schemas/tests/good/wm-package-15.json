@@ -1,0 +1,35 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.weather",
+  "name": "Weather",
+  "pluginVersion": "1.0.0",
+  "author": "Your Name",
+  "description": "Today's forecast.",
+  "apiVersion": 5,
+  "permissions": [
+    "network",
+    "storage"
+  ],
+  "hosts": [
+    "api.open-meteo.com"
+  ],
+  "tool": {
+    "icon": "cloud",
+    "tile": true,
+    "float": true,
+    "keyword": "weather",
+    "chip": true
+  },
+  "settings": [
+    {
+      "key": "units",
+      "type": "choice",
+      "label": "Units",
+      "default": "metric",
+      "options": [
+        "metric",
+        "imperial"
+      ]
+    }
+  ]
+}

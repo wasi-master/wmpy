@@ -1,0 +1,22 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.titlecase",
+  "name": "Title Case",
+  "pluginVersion": "1.0.0",
+  "apiVersion": 5,
+  "permissions": [
+    "selection"
+  ],
+  "panel": false,
+  "actions": [
+    {
+      "id": "title",
+      "name": "Title Case",
+      "icon": "text_fields"
+    },
+    {
+      "id": "sentence",
+      "name": "Sentence case"
+    }
+  ]
+}

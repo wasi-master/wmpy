@@ -1,0 +1,16 @@
+node_modules/
+out/
+dist/
+*.vsix
+target/
+build/
+.gradle/
+.idea/
+.kotlin/
+*.whl
+__pycache__/
+.DS_Store
+editors/zed/extension.wasm
+editors/jetbrains/gradle/wrapper/gradle-wrapper.jar
+editors/jetbrains/gradlew
+editors/jetbrains/gradlew.bat

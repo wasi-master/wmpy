@@ -1,0 +1,10 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.replyhelper",
+  "name": "Reply helper",
+  "pluginVersion": "1.0.0",
+  "apiVersion": 5,
+  "permissions": [
+    "ai"
+  ]
+}

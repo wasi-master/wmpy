@@ -1,0 +1,12 @@
+{
+  "format": "wmkeyboard-plugin",
+  "version": 1,
+  "id": "com.yourname.cipher",
+  "name": "Cipher Tool",
+  "pluginVersion": "1.0.0",
+  "author": "Your Name",
+  "description": "Caesar and Vigenere ciphers.",
+  "apiVersion": 4,
+  "entry": "main.py",
+  "permissions": []
+}

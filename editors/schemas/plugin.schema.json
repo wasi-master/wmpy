@@ -1,0 +1,1167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/wasi-master/wmpy/main/editors/schemas/plugin.schema.json",
+  "title": "WM Keyboard plugin manifest",
+  "description": "plugin.json of a WM Keyboard Python plugin. The same rules the keyboard checks at install (PluginManifestCodec). https://wmkeyboard.pages.dev/plugins/wm-package/#the-manifest Applies to a plugin.json that has format, pluginVersion or apiVersion, so other tools' plugin.json files are left alone.",
+  "type": "object",
+  "if": {
+    "anyOf": [
+      {
+        "required": [
+          "format"
+        ]
+      },
+      {
+        "required": [
+          "pluginVersion"
+        ]
+      },
+      {
+        "required": [
+          "apiVersion"
+        ]
+      }
+    ]
+  },
+  "then": {
+    "$ref": "#/definitions/manifest"
+  },
+  "else": {
+    "properties": {
+      "format": {
+        "const": "wmkeyboard-plugin",
+        "description": "Always \"wmkeyboard-plugin\". A file without it is not read as a plugin."
+      },
+      "pluginVersion": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 32,
+        "description": "Your version, such as \"1.2.0\". Compared for updates."
+      },
+      "apiVersion": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5,
+        "default": 5,
+        "markdownDescription": "The `wm` API level the plugin needs. `5` is the `wm` package (`from wm import plugin, ui`). A level higher than the keyboard's is refused."
+      }
+    },
+    "defaultSnippets": [
+      {
+        "label": "WM Keyboard plugin",
+        "description": "A plugin.json for an API 5 plugin",
+        "body": {
+          "format": "wmkeyboard-plugin",
+          "id": "${1:com.example.tool}",
+          "name": "${2:My tool}",
+          "pluginVersion": "${3:1.0.0}",
+          "author": "${4}",
+          "description": "${5}",
+          "apiVersion": 5,
+          "permissions": []
+        }
+      }
+    ]
+  },
+  "definitions": {
+    "permission": {
+      "enum": [
+        "storage",
+        "reminders",
+        "selection",
+        "field.write",
+        "clipboard.write",
+        "sensors",
+        "scan",
+        "device",
+        "share",
+        "notifications",
+        "clock",
+        "previews",
+        "network",
+        "network.local",
+        "ai",
+        "field.read",
+        "clipboard.read",
+        "location",
+        "files",
+        "calendar",
+        "todo"
+      ],
+      "markdownEnumDescriptions": [
+        "Listed. `storage` and `secrets`: data kept on the phone for this plugin only.",
+        "Listed. `reminders`: a line of text in a notification at a time you set.",
+        "Listed. Buttons over selected text, declared in `actions`. The selection reaches the plugin only when the user taps one.",
+        "Listed, API 5. `field`: type into the text field, replace the selection, move the cursor.",
+        "Listed, API 5. `clipboard.set`.",
+        "Listed, API 5. `sensors`: motion and light readings while the panel is open.",
+        "Listed, API 5. `scan`: the keyboard's QR and text scanners; the plugin gets the result only.",
+        "Listed, API 5. `device`: vibration, the flashlight, reading aloud, the battery level.",
+        "Listed, API 5. `share`: the share sheet and opening links, behind a sheet that names the target.",
+        "Listed, API 5. `notify`: notifications.",
+        "Listed, API 5. `clock`: alarms and timers in the keyboard's Clock. Write only.",
+        "Listed, API 5. File previews declared in `previews`: read the one file the user opens with this plugin.",
+        "Risky, API 5. `http` to the websites in `hosts`. Off until the user turns it on.",
+        "Risky, API 5. With `network`: the server the user typed into a `host` setting may be on the local network.",
+        "Risky, API 5. `ai`: the AI model the user set up in the keyboard.",
+        "Risky, API 5. `field` reads: the selection and the text around the cursor, while the user acts in the panel.",
+        "Risky, API 5. `clipboard.get`, while the user acts in the panel.",
+        "Risky, API 5. `location`.",
+        "Risky, API 5. `files`: files the user picks, and saving where the user chooses.",
+        "Risky, API 5. `calendar`: read the phone's calendars and add events.",
+        "Risky, API 5. `todo`: the keyboard's own To-do list."
+      ]
+    },
+    "api5Permission": {
+      "enum": [
+        "field.write",
+        "clipboard.write",
+        "sensors",
+        "scan",
+        "device",
+        "share",
+        "notifications",
+        "clock",
+        "previews",
+        "network",
+        "network.local",
+        "ai",
+        "field.read",
+        "clipboard.read",
+        "location",
+        "files",
+        "calendar",
+        "todo"
+      ]
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]{1,32}$",
+      "description": "1 to 32 lowercase letters, digits, - and _."
+    },
+    "extension": {
+      "type": "string",
+      "pattern": "^\\.?[a-z0-9][a-z0-9._+-]{0,15}$",
+      "description": "Lower case, without the dot: docx, tar.gz."
+    },
+    "fileName": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._+-]{1,40}$",
+      "description": "A whole file name, matched ignoring case: Dockerfile, .gitignore."
+    },
+    "icon": {
+      "type": "string",
+      "pattern": "^([a-z0-9_]{0,48}|assets/[a-z0-9][a-z0-9_.-]{0,59}\\.svg)$",
+      "markdownDescription": "A Material Symbols name the app carries (`kitchen`, `directions_transit`), or `assets/<file>.svg`: a one-colour 24×24 drawing in the plugin's `assets/` folder. Blank is the jigsaw."
+    },
+    "grammarKind": {
+      "enum": [
+        "comment",
+        "string",
+        "number",
+        "keyword",
+        "type",
+        "function",
+        "operator",
+        "tag",
+        "attribute",
+        "heading",
+        "link",
+        "emphasis",
+        "constant",
+        "punctuation"
+      ]
+    },
+    "markers": {
+      "oneOf": [
+        {
+          "type": "string",
+          "maxLength": 8
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8
+          }
+        }
+      ]
+    },
+    "grammar": {
+      "type": "object",
+      "description": "A declarative grammar the keyboard runs to colour the file. https://wmkeyboard.pages.dev/plugins/guides/file-previews/#syntax-colours",
+      "properties": {
+        "caseInsensitive": {
+          "type": "boolean",
+          "default": false
+        },
+        "rules": {
+          "type": "array",
+          "maxItems": 200,
+          "items": {
+            "type": "object",
+            "required": [
+              "match",
+              "kind"
+            ],
+            "properties": {
+              "match": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512,
+                "description": "A Java regular expression."
+              },
+              "kind": {
+                "$ref": "#/definitions/grammarKind"
+              },
+              "flags": {
+                "type": "string",
+                "pattern": "^[ims]*$",
+                "description": "i ignores case, m makes ^ and $ match at lines, s lets . match newlines."
+              }
+            }
+          }
+        },
+        "keywords": {
+          "type": "array",
+          "maxItems": 2000,
+          "items": {
+            "type": "string"
+          }
+        },
+        "types": {
+          "type": "array",
+          "maxItems": 2000,
+          "items": {
+            "type": "string"
+          }
+        },
+        "constants": {
+          "type": "array",
+          "maxItems": 2000,
+          "items": {
+            "type": "string"
+          }
+        },
+        "lineComment": {
+          "$ref": "#/definitions/markers"
+        },
+        "blockComment": {
+          "oneOf": [
+            {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 8
+                }
+              }
+            }
+          ]
+        },
+        "strings": {
+          "$ref": "#/definitions/markers"
+        },
+        "escape": {
+          "type": "string",
+          "maxLength": 1
+        },
+        "numbers": {
+          "type": "boolean",
+          "default": true
+        },
+        "calls": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "required": [
+        "format",
+        "id",
+        "name",
+        "pluginVersion",
+        "apiVersion"
+      ],
+      "properties": {
+        "$schema": {
+          "type": "string"
+        },
+        "format": {
+          "const": "wmkeyboard-plugin",
+          "description": "Always \"wmkeyboard-plugin\". A file without it is not read as a plugin."
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "markdownDescription": "The container format version, `1`. Your plugin's own version is `pluginVersion`."
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^\\s*[A-Za-z0-9][A-Za-z0-9._-]{2,63}\\s*$",
+          "markdownDescription": "Unique. 3 to 64 characters of `a-z 0-9 . _ -`, starting with a letter or digit. Reverse domain by custom: `com.yourname.tool`."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "Shown everywhere, above the permission list. Up to 40 characters."
+        },
+        "pluginVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Your version, such as \"1.2.0\". Compared for updates."
+        },
+        "author": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Shown on the install screen. Longer text is cut to 64 characters."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 280,
+          "description": "Shown on the install screen. Longer text is cut to 280 characters."
+        },
+        "apiVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "default": 5,
+          "markdownDescription": "The `wm` API level the plugin needs. `5` is the `wm` package (`from wm import plugin, ui`). A level higher than the keyboard's is refused."
+        },
+        "entry": {
+          "type": "string",
+          "maxLength": 64,
+          "default": "main.py",
+          "pattern": "^([A-Za-z_][A-Za-z0-9_]*/){0,3}[A-Za-z_][A-Za-z0-9_]*\\.py$",
+          "description": "The script to run. main.py when left out."
+        },
+        "language": {
+          "enum": [
+            "python"
+          ],
+          "description": "Only Python runs. Lua plugins were retired in API 4."
+        },
+        "permissions": {
+          "type": "array",
+          "maxItems": 24,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/permission"
+          },
+          "markdownDescription": "What the plugin may do beyond drawing in its panel. An unknown permission refuses the install. [Permissions](https://wmkeyboard.pages.dev/plugins/permissions/)"
+        },
+        "panel": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "`false` for a plugin made only of selection actions, providers, previews or grammars: it has no `render`."
+        },
+        "hosts": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "maxLength": 261,
+            "pattern": "^\\s*(https://)?(\\*\\.)?([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?[./]*\\s*$"
+          },
+          "markdownDescription": "API 5. The websites `http` may reach: `api.example.com`, or `*.example.com` for it and every name under it. No IP addresses, ports or `localhost`. Needed with `network`."
+        },
+        "tool": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Where the plugin opens from besides the Plugins panel.",
+          "properties": {
+            "icon": {
+              "$ref": "#/definitions/icon"
+            },
+            "color": {
+              "type": "string",
+              "pattern": "^(#[0-9A-Fa-f]{6})?$",
+              "description": "The icon's colour, #RRGGBB."
+            },
+            "tile": {
+              "type": "boolean",
+              "default": false,
+              "description": "Put the plugin in the toolbox as a tool when it is installed. API 5."
+            },
+            "float": {
+              "type": "boolean",
+              "default": false,
+              "description": "The panel may open in a floating box. API 5."
+            },
+            "keyword": {
+              "type": "string",
+              "pattern": "^([a-z0-9]{1,16})?$",
+              "markdownDescription": "A word the user types as `@word`. 1 to 16 lowercase letters or digits. API 5."
+            },
+            "chip": {
+              "type": "boolean",
+              "default": false,
+              "description": "With a keyword: offer the plugin on the suggestion strip when the keyword is typed. API 5."
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 600,
+              "default": 0,
+              "description": "The panel's height in dp. 0 for the keyboard's own. API 5."
+            },
+            "fullBleed": {
+              "type": "boolean",
+              "default": false,
+              "description": "The panel takes the toolbar's rows too, as Notes and the scanners do."
+            }
+          }
+        },
+        "settings": {
+          "type": "array",
+          "maxItems": 24,
+          "markdownDescription": "API 5. Rows on the plugin's settings page, drawn by the app. Read them as `plugin.settings.<key>`.",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "label"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "pattern": "^\\s*[a-z_][a-z0-9_]{0,31}\\s*$",
+                "description": "Lowercase letters, digits and _, starting with a letter or _, up to 32 characters."
+              },
+              "type": {
+                "enum": [
+                  "switch",
+                  "text",
+                  "number",
+                  "choice",
+                  "host",
+                  "secret"
+                ],
+                "default": "text",
+                "markdownEnumDescriptions": [
+                  "On or off; reads as `True` or `False`.",
+                  "A line of text.",
+                  "A number.",
+                  "One of `options`.",
+                  "A website the user types, such as their own server. Its host joins `hosts`. Only the user writes it.",
+                  "An API key or token. The page never shows it. Needs `storage`."
+                ]
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 280
+              },
+              "default": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "markdownDescription": "The starting value, written as text: `\"true\"`, `\"5\"`, `\"metric\"`. A `secret` has none."
+              },
+              "options": {
+                "type": "array",
+                "maxItems": 24,
+                "items": {
+                  "type": "string",
+                  "maxLength": 64
+                }
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "choice"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "options"
+                  ],
+                  "properties": {
+                    "options": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "actions": {
+          "type": "array",
+          "maxItems": 16,
+          "markdownDescription": "Buttons over selected text. Needs the `selection` permission. Answer each with `@plugin.action(id)`.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/id"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 24,
+                "description": "The chip's label."
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "icon": {
+                "type": "string",
+                "maxLength": 48,
+                "description": "A Material Symbols name. Blank for the default."
+              },
+              "replaces": {
+                "type": "boolean",
+                "default": true,
+                "description": "false keeps the selection and adds the result after it."
+              },
+              "input": {
+                "enum": [
+                  "selection",
+                  "none"
+                ],
+                "default": "selection",
+                "description": "selection passes the selected text; none passes an empty string."
+              }
+            }
+          }
+        },
+        "providers": {
+          "type": "array",
+          "maxItems": 8,
+          "markdownDescription": "API 5. Rows for the keyboard's provider lists. Answer each with `@plugin.provider(tool, id)`. [Providers](https://wmkeyboard.pages.dev/plugins/guides/providers/)",
+          "items": {
+            "type": "object",
+            "required": [
+              "tool"
+            ],
+            "properties": {
+              "tool": {
+                "enum": [
+                  "search",
+                  "translate",
+                  "dictionary",
+                  "synonyms",
+                  "vocab_autofill",
+                  "currency_fiat",
+                  "currency_crypto",
+                  "grammar",
+                  "gif",
+                  "sticker",
+                  "ocr",
+                  "music",
+                  "voice"
+                ],
+                "description": "The provider list it answers for."
+              },
+              "id": {
+                "type": "string",
+                "pattern": "^\\s*([a-z0-9_-]{1,32})?\\s*$",
+                "description": "Unique for its tool within the plugin. The tool's name when left out."
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 40,
+                "description": "The row's name in the list. Blank is the plugin's name."
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "images": {
+                "type": "boolean",
+                "default": false,
+                "description": "For search: it answers the Images tab too."
+              }
+            }
+          }
+        },
+        "previews": {
+          "type": "array",
+          "maxItems": 16,
+          "markdownDescription": "API 5. File types the plugin draws in the keyboard's file manager, with `@plugin.preview(id)`. Needs the `previews` permission. [File previews](https://wmkeyboard.pages.dev/plugins/guides/file-previews/)",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "anyOf": [
+              {
+                "required": [
+                  "extensions"
+                ],
+                "properties": {
+                  "extensions": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "names"
+                ],
+                "properties": {
+                  "names": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "mimes"
+                ],
+                "properties": {
+                  "mimes": {
+                    "minItems": 1
+                  }
+                }
+              }
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/id"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 24,
+                "description": "What the \"View with\" chip says. Blank is the plugin's name."
+              },
+              "extensions": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "$ref": "#/definitions/extension"
+                }
+              },
+              "names": {
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "$ref": "#/definitions/fileName"
+                }
+              },
+              "mimes": {
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "type": "string",
+                  "pattern": "^\\s*[a-zA-Z0-9][a-zA-Z0-9.+-]*/([a-zA-Z0-9][a-zA-Z0-9.+_-]*\\*?|\\*)\\s*$"
+                },
+                "markdownDescription": "`text/csv`, or a family such as `audio/*`."
+              },
+              "maxBytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 16777216,
+                "default": 4194304,
+                "description": "The most of a file the call is given at once."
+              },
+              "thumbnails": {
+                "type": "boolean",
+                "default": false,
+                "markdownDescription": "`@plugin.thumbnail(id)` draws the grid's picture for these files."
+              }
+            }
+          }
+        },
+        "syntax": {
+          "type": "array",
+          "maxItems": 16,
+          "description": "API 5. Grammars that colour file types. Need no permission.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "grammar"
+            ],
+            "anyOf": [
+              {
+                "required": [
+                  "extensions"
+                ],
+                "properties": {
+                  "extensions": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "names"
+                ],
+                "properties": {
+                  "names": {
+                    "minItems": 1
+                  }
+                }
+              }
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/id"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 24
+              },
+              "extensions": {
+                "type": "array",
+                "maxItems": 32,
+                "items": {
+                  "$ref": "#/definitions/extension"
+                }
+              },
+              "names": {
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "$ref": "#/definitions/fileName"
+                }
+              },
+              "grammar": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/grammar"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^assets/[a-z0-9][a-z0-9_.-]{0,63}\\.json$",
+                    "markdownDescription": "A grammar file in the plugin's `assets/` folder."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "actions"
+            ],
+            "properties": {
+              "actions": {
+                "minItems": 1
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "permissions"
+            ],
+            "properties": {
+              "permissions": {
+                "contains": {
+                  "const": "selection"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "permissions"
+            ],
+            "properties": {
+              "permissions": {
+                "contains": {
+                  "const": "selection"
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "actions"
+            ],
+            "properties": {
+              "actions": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "previews"
+            ],
+            "properties": {
+              "previews": {
+                "minItems": 1
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "permissions"
+            ],
+            "properties": {
+              "permissions": {
+                "contains": {
+                  "const": "previews"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "permissions"
+            ],
+            "properties": {
+              "permissions": {
+                "contains": {
+                  "const": "previews"
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "previews"
+            ],
+            "properties": {
+              "previews": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "permissions"
+            ],
+            "properties": {
+              "permissions": {
+                "contains": {
+                  "const": "network"
+                }
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "hosts"
+                ],
+                "properties": {
+                  "hosts": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "settings"
+                ],
+                "properties": {
+                  "settings": {
+                    "contains": {
+                      "required": [
+                        "type"
+                      ],
+                      "properties": {
+                        "type": {
+                          "const": "host"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "settings"
+            ],
+            "properties": {
+              "settings": {
+                "contains": {
+                  "required": [
+                    "type"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "secret"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "permissions"
+            ],
+            "properties": {
+              "permissions": {
+                "contains": {
+                  "const": "storage"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "permissions"
+            ],
+            "properties": {
+              "permissions": {
+                "contains": {
+                  "$ref": "#/definitions/api5Permission"
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "apiVersion": {
+                "minimum": 5
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "required": [
+                  "hosts"
+                ],
+                "properties": {
+                  "hosts": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "settings"
+                ],
+                "properties": {
+                  "settings": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "providers"
+                ],
+                "properties": {
+                  "providers": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "previews"
+                ],
+                "properties": {
+                  "previews": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "syntax"
+                ],
+                "properties": {
+                  "syntax": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "tool"
+                ],
+                "properties": {
+                  "tool": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "tile"
+                        ],
+                        "properties": {
+                          "tile": {
+                            "const": true
+                          }
+                        }
+                      },
+                      {
+                        "required": [
+                          "float"
+                        ],
+                        "properties": {
+                          "float": {
+                            "const": true
+                          }
+                        }
+                      },
+                      {
+                        "required": [
+                          "chip"
+                        ],
+                        "properties": {
+                          "chip": {
+                            "const": true
+                          }
+                        }
+                      },
+                      {
+                        "required": [
+                          "keyword"
+                        ],
+                        "properties": {
+                          "keyword": {
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      {
+                        "required": [
+                          "height"
+                        ],
+                        "properties": {
+                          "height": {
+                            "exclusiveMinimum": 0
+                          }
+                        }
+                      },
+                      {
+                        "required": [
+                          "icon"
+                        ],
+                        "properties": {
+                          "icon": {
+                            "pattern": "^assets/"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "apiVersion": {
+                "minimum": 5
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "panel"
+            ],
+            "properties": {
+              "panel": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "actions"
+                ],
+                "properties": {
+                  "actions": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "providers"
+                ],
+                "properties": {
+                  "providers": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "previews"
+                ],
+                "properties": {
+                  "previews": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "syntax"
+                ],
+                "properties": {
+                  "syntax": {
+                    "minItems": 1
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

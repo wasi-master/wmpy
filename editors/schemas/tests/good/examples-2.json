@@ -1,0 +1,8 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.qrmaker",
+  "name": "QR code maker",
+  "pluginVersion": "1.0.0",
+  "apiVersion": 5,
+  "permissions": []
+}

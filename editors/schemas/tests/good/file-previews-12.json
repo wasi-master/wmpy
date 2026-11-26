@@ -1,0 +1,25 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.tables",
+  "name": "Tables",
+  "pluginVersion": "1.0.0",
+  "apiVersion": 5,
+  "panel": false,
+  "permissions": [
+    "previews"
+  ],
+  "previews": [
+    {
+      "id": "csv",
+      "name": "Table",
+      "extensions": [
+        "csv",
+        "tsv"
+      ],
+      "mimes": [
+        "text/csv"
+      ],
+      "thumbnails": false
+    }
+  ]
+}

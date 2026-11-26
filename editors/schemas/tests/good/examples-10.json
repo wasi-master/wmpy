@@ -1,0 +1,10 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.tapthedot",
+  "name": "Tap the dot",
+  "pluginVersion": "1.0.0",
+  "apiVersion": 5,
+  "permissions": [
+    "storage"
+  ]
+}

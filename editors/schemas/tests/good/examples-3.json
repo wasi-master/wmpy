@@ -1,0 +1,8 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.units",
+  "name": "Unit converter",
+  "pluginVersion": "1.0.0",
+  "apiVersion": 5,
+  "permissions": []
+}

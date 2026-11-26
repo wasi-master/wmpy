@@ -1,0 +1,10 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.notes",
+  "name": "Quick notes",
+  "pluginVersion": "1.0.0",
+  "apiVersion": 5,
+  "permissions": [
+    "storage"
+  ]
+}

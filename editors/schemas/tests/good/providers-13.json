@@ -1,0 +1,22 @@
+{
+  "format": "wmkeyboard-plugin",
+  "id": "com.example.wikisearch",
+  "name": "Wiki search",
+  "pluginVersion": "1.0.0",
+  "apiVersion": 5,
+  "panel": false,
+  "permissions": [
+    "network"
+  ],
+  "hosts": [
+    "en.wikipedia.org"
+  ],
+  "providers": [
+    {
+      "tool": "search",
+      "id": "wiki",
+      "name": "Wikipedia titles",
+      "summary": "Article titles only"
+    }
+  ]
+}
